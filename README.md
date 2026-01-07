@@ -1,50 +1,52 @@
-# CITY-CAR Funnel-Analyse
+# CITY-CAR Funnel Analysis
 
-## Projektziel
-Analyse des Kunden-Funnels der Ride-Sharing-App CITY-CAR (Download → Signup → Request → Fahrt → Zahlung → Review). Fokus: reproduzierbare Kennzahlen für Warm-up und Grundlage für spätere Business-Fragen.
+## Project Description
+This project analyses the customer funnel of the CITY-CAR ride‑sharing application. The focus is on: (a) computing warm‑up metrics, (b) deriving funnel KPIs, and (c) producing visual outputs and business insights based on the provided CSV data.
 
-## Daten (kurz, gemäß Data Dictionary)
+## Project Structure
+- [src/main.py](src/main.py): CLI entry point (warm‑up mode, later visualizations)
+- [src/funnel_utility.py](src/funnel_utility.py): data loading, validation, transformations, metrics
+- [Daten/](Daten): local folder for raw CSV files
+- [outputs/](outputs): generated charts/exports
+
+## Data Notice
+Due to file size constraints, the raw CSV data files are not tracked in the Git repository. They are provided as part of the project submission and must be placed in the `Daten/` directory.
+
+CSV schema (short):
 - app_downloads.csv: app_download_key (PK), platform, download_ts
 - signups.csv: user_id (PK), session_id (FK→app_download_key), signup_ts, age_range
 - ride_requests.csv: ride_id (PK), user_id, driver_id, request_ts, accept_ts, pickup_ts, dropoff_ts, cancel_ts
-- transactions.csv: transaction_id (PK), ride_id, purchase_amount_usd, charge_status, transaction_ts
-- reviews.csv: review_id (PK), ride_id, user_id, driver_id, rating, review
+- transactions.csv: transaction_id (PK), ride_id (FK), purchase_amount_usd, charge_status, transaction_ts
+- reviews.csv: review_id (PK), ride_id (FK), user_id, driver_id, rating, review
 
-## Projektstruktur
-- src/main.py – CLI (Warm-up via --warmup)
-- src/funnel_utility.py – Laden, Validieren, Kennzahlen
-- Daten/ – CSVs (Standardpfad; via --data-dir überschreibbar)
-- outputs/ – Platz für Charts/Exports
-- TEAM_TODO.md – Rollen & Tickets
-- requirements.txt – Abhängigkeiten (pandas, numpy)
+## Setup & Reproducibility
+- Python 3.11
+- Create a virtual environment and install dependencies:
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+- Determinism & validation:
+	- File paths via `pathlib`
+	- Schema checks for required columns
+	- Metrics computed with pandas using explicit definitions
 
-## Setup & Run
-1) Python 3.11
-2) `python -m venv .venv && source .venv/bin/activate`
-3) `pip install -r requirements.txt`
-4) Warm-up ausführen:
+## Running the Warm‑up Mode
+The warm‑up metrics are printed via a CLI flag:
 ```bash
 python -m src.main --warmup --data-dir Daten
 ```
-(--data-dir weglassen, wenn Daten/ genutzt wird)
+If `Daten/` is used as the default location, `--data-dir` can be omitted.
 
-## Warm-up Definitionen (je Kennzahl)
-1) App-Downloads: Zeilen in app_downloads.csv
-2) Signups: Zeilen in signups.csv
-3) Ride Requests: Zeilen in ride_requests.csv
-4) Abgeschlossene Fahrten: dropoff_ts not null AND cancel_ts is null
-5) Ride Requests & eindeutige User: Zeilen & distinct user_id in ride_requests.csv
-6) Ø Dauer: (dropoff_ts - pickup_ts) in Minuten, nur Fahrten aus (4)
-7) Akzeptierte Fahrten: accept_ts not null
-8) Erfolgreich abgerechnet & Umsatz: charge_status == "Approved", Summe purchase_amount_usd
-9) Ride Requests pro Plattform: ride_requests → signups (user_id→session_id) → app_downloads (app_download_key)
-10) Drop-off Signup→Request: Anteil der Signups ohne eine einzige Fahrtanfrage
-
-## Reproduzierbarkeit
-- pathlib-Pfade, kein Hardcoding absoluter Wege
-- Schema-Checks je CSV (Pflichtspalten, Fehlermeldung sonst)
-- Deterministische Berechnung mit pandas
-
-## Hinweise
-- Prozent des Vorherigen: Übergangsquote Schritt→Schritt
-- Prozent der Gesamtheit: Anteil relativ zum Funnel-Einstieg
+Warm‑up metrics (definitions only):
+- App downloads: row count in app_downloads.csv
+- Signups: row count in signups.csv
+- Ride requests: row count in ride_requests.csv
+- Completed rides: `dropoff_ts` not null AND `cancel_ts` is null
+- Ride requests and unique users: total rows and distinct `user_id`
+- Average duration: `(dropoff_ts - pickup_ts)` in minutes, only completed rides
+- Accepted rides: `accept_ts` not null
+- Charged rides & revenue: `charge_status == 'Approved'`; sum of `purchase_amount_usd`
+- Requests per platform: join app_downloads → signups → ride_requests
+- Drop‑off signup → request: share of signups with zero ride requests
