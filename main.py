@@ -65,13 +65,13 @@ def main():
     funnel_data = data_handler.calculate_funnel_steps()
 
     colors = [
-        "#34495e",  # Downloads
-        "#3498db",  # Signups
-        "#1abc9c",  # Requests
-        "#2ecc71",  # Accepted
-        "#f1c40f",  # Completed
-        "#e67e22",  # Payment
-        "#e74c3c"   # Reviews
+       "#08306b", 
+        "#08519c", 
+        "#2171b5",
+        "#4292c6",  
+        "#d62728", 
+        "#6baed6", 
+        "#9ecae1"   
     ]
 
     connector_style = {"line": {"color": "#bdc3c7", "dash": "dot", "width": 2}}
@@ -93,13 +93,15 @@ def main():
         opacity=0.85,
         marker={"color": colors, "line": marker_line_style},
         connector=connector_style,
-        textfont=dict(family="Arial", size=13, color="white")
+        textfont=dict(family="Arial", size=16, color="white")
     ))
 
     fig1.update_layout(
         title="1. Funnel Analyse: Hoher Verlust nach Annahme der Fahrt",
         template="plotly_white",
-        margin=dict(r=160)
+        margin=dict(r=160),
+        font=dict(family="Arial", size=14, color="#2c3e50"),
+
     )
 
     fig1.add_annotation(
@@ -108,14 +110,12 @@ def main():
         text=f"<b>ACHTUNG!</b><br>Nur {conv_rate:.1f}% der akzeptierten<br>Fahrten werden beendet.",
         showarrow=True,
         arrowhead=2,
-        arrowcolor="red",
+        arrowcolor="#d62728",
         arrowsize=1.5,
-        ax=100,
+        ax=120,
         ay=0,
-        font=dict(color="red", size=14),
-        bgcolor="white",
-        bordercolor="red",
-        borderwidth=1
+        font=dict(color="#d62728", size=16,
+        )
     )
 
     fig1.show()
