@@ -144,6 +144,51 @@ class CityCarDataHandler:
                        users_completed, users_paid, users_reviewed]
         }
 
+    def get_patience_metrics(self):
+
+
+        if self.df_requests is None: self.load_data()
+
+
+# 1. PHASE SUCHE (Request -> Accept)
+
+# Realität: Wie lange dauert es im Median, bis akzeptiert wird?
+
+        search_reality = (self.df_requests[self.df_requests['accept_ts'].notna()]['accept_ts'] -
+
+
+        self.df_requests[self.df_requests['accept_ts'].notna()]['request_ts']).dt.total_seconds().median() / 60
+
+# Geduld: Wie lange warten Nutzer, die dann abbrechen (ohne Zusage)?
+
+
+        search_patience = (self.df_requests[(self.df_requests['cancel_ts'].notna()) & (self.df_requests['accept_ts'].isna())]['cancel_ts'] -
+        self.df_requests[(self.df_requests['cancel_ts'].notna()) & (self.df_requests['accept_ts'].isna())]['request_ts']).dt.total_seconds().median() / 60
+
+# 2. PHASE ABHOLUNG (Accept -> Pickup)
+
+# Realität: Wie lange braucht der Fahrer zum Kunden?
+        pickup_reality = (self.df_requests[self.df_requests['pickup_ts'].notna()]['pickup_ts'] - self.df_requests[self.df_requests['pickup_ts'].notna()]['accept_ts']).dt.total_seconds().median() / 60
+
+# Geduld: Wie lange warten Nutzer nach der Zusage, bevor sie DOCH NOCH stornieren?
+
+
+        pickup_patience = (self.df_requests[(self.df_requests['cancel_ts'].notna()) & (self.df_requests['accept_ts'].notna())]['cancel_ts'] - self.df_requests[(self.df_requests['cancel_ts'].notna()) & (self.df_requests['accept_ts'].notna())]['accept_ts']).dt.total_seconds().median() / 60
+
+        return {
+
+'Phasen': ['1. Fahrersuche', '1. Fahrersuche', '2. Abholung', '2. Abholung'],
+
+'Typ': ['Realität (Wartezeit)', 'Geduld (Limit)', 'Realität (Anfahrt)', 'Geduld (Limit)'],
+
+'Minuten': [search_reality, search_patience, pickup_reality, pickup_patience],
+
+'Farbe': ['#3498db', '#95a5a6', '#e74c3c', '#95a5a6'] # Blau, Grau, Rot (Problem), Grau
+
+} 
+    
+
+
     def analyze_dropoff_gap(self):
         """Untersucht, warum Fahrten akzeptiert, aber nicht abgeschlossen werden."""
         if self.df_requests is None:
@@ -262,3 +307,6 @@ class CityCarDataHandler:
         df_temp['hour'] = df_temp['request_ts'].dt.hour
 
         return df_temp['hour'].value_counts().sort_index()
+    
+
+    

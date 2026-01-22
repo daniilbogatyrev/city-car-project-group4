@@ -134,7 +134,106 @@ def main():
 
     fig1.show(config=config) 
 
+# ---------------------------------------------------------
+    # NEU: Analyse der Schmerzpunkte (Bar Chart mit Timestamps)
+    # ---------------------------------------------------------
+    print("Berechne Schmerzpunkte (Realität vs. Geduld)...")
+    metrics = data_handler.get_patience_metrics()
     
+    # Werte extrahieren
+    val_search_real = metrics['Minuten'][0]
+    val_search_pat  = metrics['Minuten'][1]
+    val_pickup_real = metrics['Minuten'][2]
+    val_pickup_pat  = metrics['Minuten'][3]
+    
+    fig_pain = go.Figure()
+
+    # --- GRUPPE 1: FAHRERSUCHE ---
+    # Realität: Wie lange dauert es bis zum Accept?
+    fig_pain.add_trace(go.Bar(
+        name='Realität (Median)',
+        x=['<b>1. Fahrersuche</b><br><i>(Accept - Request)</i>'], # Timestamp Erklärung direkt im Label
+        y=[val_search_real],
+        marker_color='#3498db', # Blau
+        text=[f"{val_search_real:.1f} min"],
+        textposition='auto',
+        offsetgroup=0
+    ))
+    
+    # Geduld: Wie lange warten sie bis Cancel?
+    fig_pain.add_trace(go.Bar(
+        name='Geduld (Median Limit)',
+        x=['<b>1. Fahrersuche</b><br><i>(Accept - Request)</i>'],
+        y=[val_search_pat],
+        marker_color='#95a5a6', # Grau
+        text=[f"{val_search_pat:.1f} min"],
+        textposition='auto',
+        offsetgroup=1
+    ))
+
+    # --- GRUPPE 2: ABHOLUNG ---
+    # Realität: Wie lange braucht der Fahrer?
+    fig_pain.add_trace(go.Bar(
+        name='Realität (Median)', # Gleicher Legenden-Name gruppiert automatisch
+        x=['<b>2. Abholung</b><br><i>(Pickup - Accept)</i>'], # Timestamp Erklärung
+        y=[val_pickup_real],
+        marker_color='#e74c3c', # Rot (Signal für Problem)
+        text=[f"{val_pickup_real:.1f} min"],
+        textposition='auto',
+        offsetgroup=0,
+        showlegend=False
+    ))
+    
+    # Geduld: Wie lange warten sie nach Accept?
+    fig_pain.add_trace(go.Bar(
+        name='Geduld (Median Limit)',
+        x=['<b>2. Abholung</b><br><i>(Pickup - Accept)</i>'],
+        y=[val_pickup_pat],
+        marker_color='#95a5a6',
+        text=[f"{val_pickup_pat:.1f} min"],
+        textposition='auto',
+        offsetgroup=1,
+        showlegend=False
+    ))
+
+    # Annotation für den GAP (Lücke)
+    gap = val_pickup_real - val_pickup_pat
+    fig_pain.add_annotation(
+        x='<b>2. Abholung</b><br><i>(Pickup - Accept)</i>',
+        y=max(val_pickup_real, val_pickup_pat) + 1.5,
+        text=f"<b>GAP: +{gap:.1f} min</b><br>(Fahrer kommt zu spät!)",
+        showarrow=False,
+        font=dict(color="#c0392b", size=14)
+    )
+
+    fig_pain.update_layout(
+        title='<b>Schmerzpunkt-Analyse:</b> Wo verlieren wir Kunden?',
+        yaxis_title='Minuten (Median)',
+        barmode='group',
+        template='plotly_white',
+        legend=dict(x=0.01, y=0.99, bgcolor='rgba(255,255,255,0.8)'),
+        margin=dict(b=100) # Platz unten für Labels lassen
+    )
+
+    # Optional: Ein technischer Hinweis unter dem Graphen
+    fig_pain.add_annotation(
+        text="Basis: <i>Accept - Request</i> (Suche) vs. <i>Pickup - Accept</i> (Abholung). Geduld gemessen an <i>Cancel TS</i>.",
+        xref="paper", yref="paper",
+        x=0.5, y=-0.25,
+        showarrow=False,
+        font=dict(size=10, color="gray")
+    )
+
+    fig_pain.show()
+
+
+
+
+
+
+
+
+
 
     # Plattform-Analyse
     print("Berechne Plattform-Daten...")
@@ -207,7 +306,6 @@ def main():
     fig_surge.update_traces(fill='tozeroy', line_color='#e74c3c')
 
     fig_surge.show()
-
 
 if __name__ == "__main__":
     main()
